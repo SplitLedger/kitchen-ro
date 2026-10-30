@@ -53,10 +53,7 @@ export function AppFrame() {
         <Flex aria-label="Primary" asChild gap="2" mt="3" wrap="wrap">
           <nav>
             {navItems.map((item) => {
-              const active =
-                item.to === "/orders"
-                  ? pathname === "/orders" || pathname.startsWith("/orders/")
-                  : pathname === item.to;
+              const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
               return (
                 <Button
                   key={item.to}

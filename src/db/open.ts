@@ -1,6 +1,7 @@
 import { createKitchenDatabase, type KitchenDatabase } from "./client";
 import type { SqlExecutor } from "./executor";
 import { migrate } from "./migrate";
+import { seedOfficialCatalog } from "./seed-catalog";
 import { ensureSettings, readSettings, updateTheme } from "./settings";
 import type { Settings, ThemeName } from "./schema";
 
@@ -29,8 +30,10 @@ async function openAppDatabaseOnce(): Promise<AppDatabase> {
   const executor = await createExecutor();
   await executor.execute("PRAGMA foreign_keys = ON");
   await migrate(executor);
+  await executor.execute("PRAGMA foreign_keys = ON");
   const db = createKitchenDatabase(executor);
   await ensureSettings(db);
+  await seedOfficialCatalog(db);
 
   return {
     db,

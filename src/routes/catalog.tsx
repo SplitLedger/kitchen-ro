@@ -1,10 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { EmptyPage } from "@/components/empty-page";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/catalog")({
-  component: CatalogPage,
+  component: Outlet,
 });
-
-function CatalogPage() {
-  return <EmptyPage title="Catalog" description="The dish list is not loaded yet." />;
-}
