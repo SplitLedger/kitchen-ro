@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1793401495030,
+      "tag": "0000_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1793402177286,
+      "tag": "0001_dark_theme_default",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793402268827,
+      "tag": "0002_currency_zeny",
+      "breakpoints": true
+    }
+  ]
+}
