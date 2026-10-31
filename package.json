@@ -16,19 +16,26 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@maskito/core": "^5.6.1",
+    "@maskito/kit": "^5.6.1",
+    "@maskito/react": "^5.6.1",
     "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/themes": "^3.3.0",
+    "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-router": "^1.170.46",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-sql": "^2.6.0",
     "drizzle-orm": "^0.45.4",
+    "luxon": "^3.7.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "sonner": "^2.0.8",
     "sql.js": "^1.15.2"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "^1.168.48",
     "@tauri-apps/cli": "^2",
+    "@types/luxon": "^3.7.6",
     "@types/node": "^26.6.6",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

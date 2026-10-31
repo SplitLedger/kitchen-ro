@@ -1,21 +1,33 @@
 import { createKitchenDatabase, type KitchenDatabase } from "./client";
 import type { SqlExecutor } from "./executor";
 import { migrate } from "./migrate";
+import { isTauriRuntime } from "./runtime";
 import { seedOfficialCatalog } from "./seed-catalog";
-import { ensureSettings, readSettings, updateTheme } from "./settings";
-import type { Settings, ThemeName } from "./schema";
+import type { CookProfileDraft } from "@/domain/cooking/profile";
+import type { PricingSettingsDraft } from "@/domain/pricing/cost";
+import type { PriceBasis } from "@/domain/inventory/prices";
+import {
+  ensureSettings,
+  readSettings,
+  updateCookProfile,
+  updatePlanningMode,
+  updatePriceBasis,
+  updatePricingSettings,
+  updateTheme,
+} from "./settings";
+import type { PlanningMode, Settings, ThemeName } from "./schema";
 
 export type AppDatabase = {
   db: KitchenDatabase;
   readSettings(): Promise<Settings>;
   updateTheme(theme: ThemeName): Promise<Settings>;
+  updateCookProfile(draft: CookProfileDraft): Promise<Settings>;
+  updatePricingSettings(draft: PricingSettingsDraft): Promise<Settings>;
+  updatePlanningMode(planningMode: PlanningMode): Promise<Settings>;
+  updatePriceBasis(priceBasis: PriceBasis): Promise<Settings>;
 };
 
 let opening: Promise<AppDatabase> | null = null;
-
-function isTauriRuntime(): boolean {
-  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-}
 
 async function createExecutor(): Promise<SqlExecutor> {
   if (isTauriRuntime()) {
@@ -39,6 +51,10 @@ async function openAppDatabaseOnce(): Promise<AppDatabase> {
     db,
     readSettings: () => readSettings(db),
     updateTheme: (theme) => updateTheme(db, theme),
+    updateCookProfile: (draft) => updateCookProfile(db, draft),
+    updatePricingSettings: (draft) => updatePricingSettings(db, draft),
+    updatePlanningMode: (planningMode) => updatePlanningMode(db, planningMode),
+    updatePriceBasis: (priceBasis) => updatePriceBasis(db, priceBasis),
   };
 }
 

@@ -1,9 +1,13 @@
 import { Button, Flex, Heading, Text, Theme } from "@radix-ui/themes";
 import { RouterProvider } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Toaster } from "sonner";
 import { AppStateProvider } from "@/providers/AppStateProvider";
 import { openAppDatabase, type AppDatabase } from "@/db/open";
-import type { Settings, ThemeName } from "@/db/schema";
+import type { CookProfileDraft } from "@/domain/cooking/profile";
+import type { PriceBasis } from "@/domain/inventory/prices";
+import type { PricingSettingsDraft } from "@/domain/pricing/cost";
+import type { PlanningMode, Settings, ThemeName } from "@/db/schema";
 import { router } from "@/router";
 
 type ReadyState = {
@@ -73,6 +77,26 @@ export function App() {
     setReady({ database, settings });
   }
 
+  async function updateCookProfile(draft: CookProfileDraft) {
+    const settings = await database.updateCookProfile(draft);
+    setReady({ database, settings });
+  }
+
+  async function updatePricingSettings(draft: PricingSettingsDraft) {
+    const settings = await database.updatePricingSettings(draft);
+    setReady({ database, settings });
+  }
+
+  async function updatePlanningMode(planningMode: PlanningMode) {
+    const settings = await database.updatePlanningMode(planningMode);
+    setReady({ database, settings });
+  }
+
+  async function updatePriceBasis(priceBasis: PriceBasis) {
+    const settings = await database.updatePriceBasis(priceBasis);
+    setReady({ database, settings });
+  }
+
   return (
     <Theme
       accentColor="orange"
@@ -86,9 +110,19 @@ export function App() {
           database: ready.database,
           settings: ready.settings,
           setTheme,
+          updateCookProfile,
+          updatePricingSettings,
+          updatePlanningMode,
+          updatePriceBasis,
         }}
       >
         <RouterProvider router={router} />
+        <Toaster
+          className="no-print"
+          position="bottom-right"
+          richColors
+          theme={ready.settings.theme}
+        />
       </AppStateProvider>
     </Theme>
   );

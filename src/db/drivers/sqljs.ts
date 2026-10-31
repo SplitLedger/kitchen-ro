@@ -23,8 +23,12 @@ function bindParams(params: readonly unknown[] | undefined): SqlJsValue[] {
   });
 }
 
+function leadingKeyword(sql: string): string | undefined {
+  return sql.trimStart().split(/\s+/, 1)[0]?.toLowerCase();
+}
+
 function transactionEdge(sql: string): "begin" | "end" | null {
-  const keyword = sql.trimStart().split(/\s+/, 1)[0]?.toLowerCase();
+  const keyword = leadingKeyword(sql);
   if (keyword === "begin") {
     return "begin";
   }
@@ -32,6 +36,13 @@ function transactionEdge(sql: string): "begin" | "end" | null {
     return "end";
   }
   return null;
+}
+
+function isWrite(sql: string): boolean {
+  const keyword = leadingKeyword(sql);
+  return (
+    keyword === "insert" || keyword === "update" || keyword === "delete" || keyword === "replace"
+  );
 }
 
 export function createSqlJsExecutor(
@@ -69,6 +80,9 @@ export function createSqlJsExecutor(
             row[column] = values[index] ?? null;
           });
           rows.push(row);
+        }
+        if (isWrite(sql) && transactionDepth === 0 && options.persist) {
+          await options.persist();
         }
         return rows as T[];
       } finally {

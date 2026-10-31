@@ -10,37 +10,47 @@
 
 import { Route as rootRouteImport } from "./routes/__root"
 import { Route as IndexRouteImport } from "./routes/index"
-import { Route as CatalogRouteImport } from "./routes/catalog"
-import { Route as IngredientsRouteImport } from "./routes/ingredients"
-import { Route as OrdersRouteImport } from "./routes/orders"
-import { Route as PricesRouteImport } from "./routes/prices"
+import { Route as CatalogRouteRouteImport } from "./routes/catalog/route"
+import { Route as IngredientsRouteRouteImport } from "./routes/ingredients/route"
+import { Route as InventoryRouteImport } from "./routes/inventory"
+import { Route as OrdersRouteRouteImport } from "./routes/orders/route"
 import { Route as SettingsRouteImport } from "./routes/settings"
-import { Route as CatalogIndexRouteImport } from "./routes/catalog.index"
-import { Route as CatalogRecipeIdRouteImport } from "./routes/catalog.$recipeId"
+import { Route as CatalogIndexRouteImport } from "./routes/catalog/index"
+import { Route as CatalogRecipeIdRouteRouteImport } from "./routes/catalog/$recipeId/route"
+import { Route as CatalogNewRouteImport } from "./routes/catalog/new"
+import { Route as IngredientsIndexRouteImport } from "./routes/ingredients/index"
+import { Route as IngredientsIngredientIdRouteImport } from "./routes/ingredients/$ingredientId"
+import { Route as IngredientsNewRouteImport } from "./routes/ingredients/new"
+import { Route as OrdersIndexRouteImport } from "./routes/orders/index"
+import { Route as OrdersOrderIdRouteImport } from "./routes/orders/$orderId"
+import { Route as CatalogRecipeIdIndexRouteImport } from "./routes/catalog/$recipeId/index"
+import { Route as CatalogRecipeIdEditRouteImport } from "./routes/catalog/$recipeId/edit"
+import { Route as CatalogKitsKitIdRouteImport } from "./routes/catalog/kits/$kitId"
+import { Route as CatalogKitsNewRouteImport } from "./routes/catalog/kits/new"
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any)
-const CatalogRoute = CatalogRouteImport.update({
+const CatalogRouteRoute = CatalogRouteRouteImport.update({
   id: "/catalog",
   path: "/catalog",
   getParentRoute: () => rootRouteImport,
 } as any)
-const IngredientsRoute = IngredientsRouteImport.update({
+const IngredientsRouteRoute = IngredientsRouteRouteImport.update({
   id: "/ingredients",
   path: "/ingredients",
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrdersRoute = OrdersRouteImport.update({
-  id: "/orders",
-  path: "/orders",
+const InventoryRoute = InventoryRouteImport.update({
+  id: "/inventory",
+  path: "/inventory",
   getParentRoute: () => rootRouteImport,
 } as any)
-const PricesRoute = PricesRouteImport.update({
-  id: "/prices",
-  path: "/prices",
+const OrdersRouteRoute = OrdersRouteRouteImport.update({
+  id: "/orders",
+  path: "/orders",
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -51,43 +61,120 @@ const SettingsRoute = SettingsRouteImport.update({
 const CatalogIndexRoute = CatalogIndexRouteImport.update({
   id: "/",
   path: "/",
-  getParentRoute: () => CatalogRoute,
+  getParentRoute: () => CatalogRouteRoute,
 } as any)
-const CatalogRecipeIdRoute = CatalogRecipeIdRouteImport.update({
+const CatalogRecipeIdRouteRoute = CatalogRecipeIdRouteRouteImport.update({
   id: "/$recipeId",
   path: "/$recipeId",
-  getParentRoute: () => CatalogRoute,
+  getParentRoute: () => CatalogRouteRoute,
+} as any)
+const CatalogNewRoute = CatalogNewRouteImport.update({
+  id: "/new",
+  path: "/new",
+  getParentRoute: () => CatalogRouteRoute,
+} as any)
+const IngredientsIndexRoute = IngredientsIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => IngredientsRouteRoute,
+} as any)
+const IngredientsIngredientIdRoute = IngredientsIngredientIdRouteImport.update({
+  id: "/$ingredientId",
+  path: "/$ingredientId",
+  getParentRoute: () => IngredientsRouteRoute,
+} as any)
+const IngredientsNewRoute = IngredientsNewRouteImport.update({
+  id: "/new",
+  path: "/new",
+  getParentRoute: () => IngredientsRouteRoute,
+} as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => OrdersRouteRoute,
+} as any)
+const OrdersOrderIdRoute = OrdersOrderIdRouteImport.update({
+  id: "/$orderId",
+  path: "/$orderId",
+  getParentRoute: () => OrdersRouteRoute,
+} as any)
+const CatalogRecipeIdIndexRoute = CatalogRecipeIdIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => CatalogRecipeIdRouteRoute,
+} as any)
+const CatalogRecipeIdEditRoute = CatalogRecipeIdEditRouteImport.update({
+  id: "/edit",
+  path: "/edit",
+  getParentRoute: () => CatalogRecipeIdRouteRoute,
+} as any)
+const CatalogKitsKitIdRoute = CatalogKitsKitIdRouteImport.update({
+  id: "/kits/$kitId",
+  path: "/kits/$kitId",
+  getParentRoute: () => CatalogRouteRoute,
+} as any)
+const CatalogKitsNewRoute = CatalogKitsNewRouteImport.update({
+  id: "/kits/new",
+  path: "/kits/new",
+  getParentRoute: () => CatalogRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
-  "/catalog": typeof CatalogRouteWithChildren
-  "/ingredients": typeof IngredientsRoute
-  "/orders": typeof OrdersRoute
-  "/prices": typeof PricesRoute
+  "/catalog": typeof CatalogRouteRouteWithChildren
+  "/ingredients": typeof IngredientsRouteRouteWithChildren
+  "/orders": typeof OrdersRouteRouteWithChildren
+  "/inventory": typeof InventoryRoute
   "/settings": typeof SettingsRoute
-  "/catalog/$recipeId": typeof CatalogRecipeIdRoute
+  "/catalog/$recipeId": typeof CatalogRecipeIdRouteRouteWithChildren
+  "/catalog/new": typeof CatalogNewRoute
+  "/ingredients/$ingredientId": typeof IngredientsIngredientIdRoute
+  "/ingredients/new": typeof IngredientsNewRoute
+  "/orders/$orderId": typeof OrdersOrderIdRoute
   "/catalog/": typeof CatalogIndexRoute
+  "/ingredients/": typeof IngredientsIndexRoute
+  "/orders/": typeof OrdersIndexRoute
+  "/catalog/$recipeId/edit": typeof CatalogRecipeIdEditRoute
+  "/catalog/kits/$kitId": typeof CatalogKitsKitIdRoute
+  "/catalog/kits/new": typeof CatalogKitsNewRoute
+  "/catalog/$recipeId/": typeof CatalogRecipeIdIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
-  "/ingredients": typeof IngredientsRoute
-  "/orders": typeof OrdersRoute
-  "/prices": typeof PricesRoute
+  "/inventory": typeof InventoryRoute
   "/settings": typeof SettingsRoute
-  "/catalog/$recipeId": typeof CatalogRecipeIdRoute
+  "/catalog/new": typeof CatalogNewRoute
+  "/ingredients/$ingredientId": typeof IngredientsIngredientIdRoute
+  "/ingredients/new": typeof IngredientsNewRoute
+  "/orders/$orderId": typeof OrdersOrderIdRoute
   "/catalog": typeof CatalogIndexRoute
+  "/ingredients": typeof IngredientsIndexRoute
+  "/orders": typeof OrdersIndexRoute
+  "/catalog/$recipeId/edit": typeof CatalogRecipeIdEditRoute
+  "/catalog/kits/$kitId": typeof CatalogKitsKitIdRoute
+  "/catalog/kits/new": typeof CatalogKitsNewRoute
+  "/catalog/$recipeId": typeof CatalogRecipeIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
-  "/catalog": typeof CatalogRouteWithChildren
-  "/ingredients": typeof IngredientsRoute
-  "/orders": typeof OrdersRoute
-  "/prices": typeof PricesRoute
+  "/catalog": typeof CatalogRouteRouteWithChildren
+  "/ingredients": typeof IngredientsRouteRouteWithChildren
+  "/orders": typeof OrdersRouteRouteWithChildren
+  "/inventory": typeof InventoryRoute
   "/settings": typeof SettingsRoute
-  "/catalog/$recipeId": typeof CatalogRecipeIdRoute
+  "/catalog/$recipeId": typeof CatalogRecipeIdRouteRouteWithChildren
+  "/catalog/new": typeof CatalogNewRoute
+  "/ingredients/$ingredientId": typeof IngredientsIngredientIdRoute
+  "/ingredients/new": typeof IngredientsNewRoute
+  "/orders/$orderId": typeof OrdersOrderIdRoute
   "/catalog/": typeof CatalogIndexRoute
+  "/ingredients/": typeof IngredientsIndexRoute
+  "/orders/": typeof OrdersIndexRoute
+  "/catalog/$recipeId/edit": typeof CatalogRecipeIdEditRoute
+  "/catalog/kits/$kitId": typeof CatalogKitsKitIdRoute
+  "/catalog/kits/new": typeof CatalogKitsNewRoute
+  "/catalog/$recipeId/": typeof CatalogRecipeIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,37 +183,64 @@ export interface FileRouteTypes {
     | "/catalog"
     | "/ingredients"
     | "/orders"
-    | "/prices"
+    | "/inventory"
     | "/settings"
     | "/catalog/$recipeId"
+    | "/catalog/new"
+    | "/ingredients/$ingredientId"
+    | "/ingredients/new"
+    | "/orders/$orderId"
     | "/catalog/"
+    | "/ingredients/"
+    | "/orders/"
+    | "/catalog/$recipeId/edit"
+    | "/catalog/kits/$kitId"
+    | "/catalog/kits/new"
+    | "/catalog/$recipeId/"
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
+    | "/inventory"
+    | "/settings"
+    | "/catalog/new"
+    | "/ingredients/$ingredientId"
+    | "/ingredients/new"
+    | "/orders/$orderId"
+    | "/catalog"
     | "/ingredients"
     | "/orders"
-    | "/prices"
-    | "/settings"
+    | "/catalog/$recipeId/edit"
+    | "/catalog/kits/$kitId"
+    | "/catalog/kits/new"
     | "/catalog/$recipeId"
-    | "/catalog"
   id:
     | "__root__"
     | "/"
     | "/catalog"
     | "/ingredients"
     | "/orders"
-    | "/prices"
+    | "/inventory"
     | "/settings"
     | "/catalog/$recipeId"
+    | "/catalog/new"
+    | "/ingredients/$ingredientId"
+    | "/ingredients/new"
+    | "/orders/$orderId"
     | "/catalog/"
+    | "/ingredients/"
+    | "/orders/"
+    | "/catalog/$recipeId/edit"
+    | "/catalog/kits/$kitId"
+    | "/catalog/kits/new"
+    | "/catalog/$recipeId/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CatalogRoute: typeof CatalogRouteWithChildren
-  IngredientsRoute: typeof IngredientsRoute
-  OrdersRoute: typeof OrdersRoute
-  PricesRoute: typeof PricesRoute
+  CatalogRouteRoute: typeof CatalogRouteRouteWithChildren
+  IngredientsRouteRoute: typeof IngredientsRouteRouteWithChildren
+  OrdersRouteRoute: typeof OrdersRouteRouteWithChildren
+  InventoryRoute: typeof InventoryRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -143,28 +257,28 @@ declare module "@tanstack/react-router" {
       id: "/catalog"
       path: "/catalog"
       fullPath: "/catalog"
-      preLoaderRoute: typeof CatalogRouteImport
+      preLoaderRoute: typeof CatalogRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/ingredients": {
       id: "/ingredients"
       path: "/ingredients"
       fullPath: "/ingredients"
-      preLoaderRoute: typeof IngredientsRouteImport
+      preLoaderRoute: typeof IngredientsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/inventory": {
+      id: "/inventory"
+      path: "/inventory"
+      fullPath: "/inventory"
+      preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/orders": {
       id: "/orders"
       path: "/orders"
       fullPath: "/orders"
-      preLoaderRoute: typeof OrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    "/prices": {
-      id: "/prices"
-      path: "/prices"
-      fullPath: "/prices"
-      preLoaderRoute: typeof PricesRouteImport
+      preLoaderRoute: typeof OrdersRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/settings": {
@@ -179,37 +293,156 @@ declare module "@tanstack/react-router" {
       path: "/"
       fullPath: "/catalog/"
       preLoaderRoute: typeof CatalogIndexRouteImport
-      parentRoute: typeof CatalogRoute
+      parentRoute: typeof CatalogRouteRoute
     }
     "/catalog/$recipeId": {
       id: "/catalog/$recipeId"
       path: "/$recipeId"
       fullPath: "/catalog/$recipeId"
-      preLoaderRoute: typeof CatalogRecipeIdRouteImport
-      parentRoute: typeof CatalogRoute
+      preLoaderRoute: typeof CatalogRecipeIdRouteRouteImport
+      parentRoute: typeof CatalogRouteRoute
+    }
+    "/catalog/new": {
+      id: "/catalog/new"
+      path: "/new"
+      fullPath: "/catalog/new"
+      preLoaderRoute: typeof CatalogNewRouteImport
+      parentRoute: typeof CatalogRouteRoute
+    }
+    "/ingredients/": {
+      id: "/ingredients/"
+      path: "/"
+      fullPath: "/ingredients/"
+      preLoaderRoute: typeof IngredientsIndexRouteImport
+      parentRoute: typeof IngredientsRouteRoute
+    }
+    "/ingredients/$ingredientId": {
+      id: "/ingredients/$ingredientId"
+      path: "/$ingredientId"
+      fullPath: "/ingredients/$ingredientId"
+      preLoaderRoute: typeof IngredientsIngredientIdRouteImport
+      parentRoute: typeof IngredientsRouteRoute
+    }
+    "/ingredients/new": {
+      id: "/ingredients/new"
+      path: "/new"
+      fullPath: "/ingredients/new"
+      preLoaderRoute: typeof IngredientsNewRouteImport
+      parentRoute: typeof IngredientsRouteRoute
+    }
+    "/orders/": {
+      id: "/orders/"
+      path: "/"
+      fullPath: "/orders/"
+      preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof OrdersRouteRoute
+    }
+    "/orders/$orderId": {
+      id: "/orders/$orderId"
+      path: "/$orderId"
+      fullPath: "/orders/$orderId"
+      preLoaderRoute: typeof OrdersOrderIdRouteImport
+      parentRoute: typeof OrdersRouteRoute
+    }
+    "/catalog/$recipeId/": {
+      id: "/catalog/$recipeId/"
+      path: "/"
+      fullPath: "/catalog/$recipeId/"
+      preLoaderRoute: typeof CatalogRecipeIdIndexRouteImport
+      parentRoute: typeof CatalogRecipeIdRouteRoute
+    }
+    "/catalog/$recipeId/edit": {
+      id: "/catalog/$recipeId/edit"
+      path: "/edit"
+      fullPath: "/catalog/$recipeId/edit"
+      preLoaderRoute: typeof CatalogRecipeIdEditRouteImport
+      parentRoute: typeof CatalogRecipeIdRouteRoute
+    }
+    "/catalog/kits/$kitId": {
+      id: "/catalog/kits/$kitId"
+      path: "/kits/$kitId"
+      fullPath: "/catalog/kits/$kitId"
+      preLoaderRoute: typeof CatalogKitsKitIdRouteImport
+      parentRoute: typeof CatalogRouteRoute
+    }
+    "/catalog/kits/new": {
+      id: "/catalog/kits/new"
+      path: "/kits/new"
+      fullPath: "/catalog/kits/new"
+      preLoaderRoute: typeof CatalogKitsNewRouteImport
+      parentRoute: typeof CatalogRouteRoute
     }
   }
 }
 
-interface CatalogRouteChildren {
-  CatalogRecipeIdRoute: typeof CatalogRecipeIdRoute
+interface CatalogRecipeIdRouteRouteChildren {
+  CatalogRecipeIdEditRoute: typeof CatalogRecipeIdEditRoute
+  CatalogRecipeIdIndexRoute: typeof CatalogRecipeIdIndexRoute
+}
+
+const CatalogRecipeIdRouteRouteChildren: CatalogRecipeIdRouteRouteChildren = {
+  CatalogRecipeIdEditRoute: CatalogRecipeIdEditRoute,
+  CatalogRecipeIdIndexRoute: CatalogRecipeIdIndexRoute,
+}
+
+const CatalogRecipeIdRouteRouteWithChildren =
+  CatalogRecipeIdRouteRoute._addFileChildren(CatalogRecipeIdRouteRouteChildren)
+
+interface CatalogRouteRouteChildren {
+  CatalogRecipeIdRouteRoute: typeof CatalogRecipeIdRouteRouteWithChildren
+  CatalogNewRoute: typeof CatalogNewRoute
   CatalogIndexRoute: typeof CatalogIndexRoute
+  CatalogKitsKitIdRoute: typeof CatalogKitsKitIdRoute
+  CatalogKitsNewRoute: typeof CatalogKitsNewRoute
 }
 
-const CatalogRouteChildren: CatalogRouteChildren = {
-  CatalogRecipeIdRoute: CatalogRecipeIdRoute,
+const CatalogRouteRouteChildren: CatalogRouteRouteChildren = {
+  CatalogRecipeIdRouteRoute: CatalogRecipeIdRouteRouteWithChildren,
+  CatalogNewRoute: CatalogNewRoute,
   CatalogIndexRoute: CatalogIndexRoute,
+  CatalogKitsKitIdRoute: CatalogKitsKitIdRoute,
+  CatalogKitsNewRoute: CatalogKitsNewRoute,
 }
 
-const CatalogRouteWithChildren =
-  CatalogRoute._addFileChildren(CatalogRouteChildren)
+const CatalogRouteRouteWithChildren = CatalogRouteRoute._addFileChildren(
+  CatalogRouteRouteChildren,
+)
+
+interface IngredientsRouteRouteChildren {
+  IngredientsIngredientIdRoute: typeof IngredientsIngredientIdRoute
+  IngredientsNewRoute: typeof IngredientsNewRoute
+  IngredientsIndexRoute: typeof IngredientsIndexRoute
+}
+
+const IngredientsRouteRouteChildren: IngredientsRouteRouteChildren = {
+  IngredientsIngredientIdRoute: IngredientsIngredientIdRoute,
+  IngredientsNewRoute: IngredientsNewRoute,
+  IngredientsIndexRoute: IngredientsIndexRoute,
+}
+
+const IngredientsRouteRouteWithChildren =
+  IngredientsRouteRoute._addFileChildren(IngredientsRouteRouteChildren)
+
+interface OrdersRouteRouteChildren {
+  OrdersOrderIdRoute: typeof OrdersOrderIdRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
+}
+
+const OrdersRouteRouteChildren: OrdersRouteRouteChildren = {
+  OrdersOrderIdRoute: OrdersOrderIdRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
+}
+
+const OrdersRouteRouteWithChildren = OrdersRouteRoute._addFileChildren(
+  OrdersRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CatalogRoute: CatalogRouteWithChildren,
-  IngredientsRoute: IngredientsRoute,
-  OrdersRoute: OrdersRoute,
-  PricesRoute: PricesRoute,
+  CatalogRouteRoute: CatalogRouteRouteWithChildren,
+  IngredientsRouteRoute: IngredientsRouteRouteWithChildren,
+  OrdersRouteRoute: OrdersRouteRouteWithChildren,
+  InventoryRoute: InventoryRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport

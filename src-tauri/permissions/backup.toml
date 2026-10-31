@@ -1,0 +1,8 @@
+[[permission]]
+identifier = "allow-database-backup"
+description = "Save a copy of the Kitchen RO database, or replace it with a chosen backup."
+commands.allow = [
+  "save_database_backup",
+  "pick_database_backup",
+  "install_database_backup",
+]

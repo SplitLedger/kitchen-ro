@@ -7,6 +7,10 @@ const databaseName = "kitchen-ro";
 const storeName = "sqlite";
 const recordKey = "main";
 
+let exportLive: (() => Uint8Array) | null = null;
+let acceptPersist = true;
+let persistChain: Promise<void> = Promise.resolve();
+
 function openIndexedDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(databaseName, 1);
@@ -70,16 +74,49 @@ async function writeDatabaseBytes(bytes: Uint8Array): Promise<void> {
   }
 }
 
+function enqueuePersist(bytes: Uint8Array): Promise<void> {
+  const run = persistChain.then(async () => {
+    if (!acceptPersist) {
+      return;
+    }
+    await writeDatabaseBytes(bytes);
+  });
+  persistChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+export function exportBrowserDatabaseBytes(): Uint8Array {
+  if (!exportLive) {
+    throw new Error("The database is not open.");
+  }
+  return exportLive();
+}
+
+export async function replaceBrowserDatabase(bytes: Uint8Array): Promise<void> {
+  acceptPersist = false;
+  try {
+    await persistChain;
+    await writeDatabaseBytes(bytes);
+  } catch (error) {
+    acceptPersist = true;
+    throw error;
+  }
+}
+
 export async function createBrowserExecutor(): Promise<SqlExecutor> {
   const SQL = await initSqlJs({
     locateFile: () => wasmUrl,
   });
   const saved = await readDatabaseBytes();
   const database = saved ? new SQL.Database(saved) : new SQL.Database();
+  exportLive = () => new Uint8Array(database.export());
 
   return createSqlJsExecutor(database, {
     persist: async () => {
-      await writeDatabaseBytes(database.export());
+      await enqueuePersist(new Uint8Array(database.export()));
     },
   });
 }

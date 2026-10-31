@@ -41,7 +41,9 @@ test("seeds official rows once and leaves later edits in place", async () => {
   const db = await openSeededDatabase();
   const firstRecipes = await listCatalogRecipes(db);
   expect(firstRecipes).toHaveLength(60);
-  expect(firstRecipes.slice(0, 6).map((recipe) => [recipe.level, recipe.stat, recipe.name])).toEqual([
+  expect(
+    firstRecipes.slice(0, 6).map((recipe) => [recipe.level, recipe.stat, recipe.name]),
+  ).toEqual([
     [1, "str", "Fried Grasshopper Legs"],
     [1, "agi", "Frog Egg Squid Ink Soup"],
     [1, "vit", "Steamed Crab Nippers"],
@@ -55,7 +57,9 @@ test("seeds official rows once and leaves later edits in place", async () => {
   );
 
   const legs = firstRecipes.find((recipe) => recipe.name === "Fried Grasshopper Legs");
-  expect(legs?.items).toEqual([
+  expect(
+    legs?.items.map(({ quantity, name, referencePrice }) => ({ quantity, name, referencePrice })),
+  ).toEqual([
     { quantity: 5, name: "Grasshopper's Leg", referencePrice: null },
     { quantity: 1, name: "Old Frying Pan", referencePrice: null },
     { quantity: 1, name: "Cooking Oil", referencePrice: 500 },

@@ -8,3 +8,42 @@ body,
 body {
   min-height: 100vh;
 }
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  html,
+  body,
+  #root,
+  .radix-themes,
+  .app-main {
+    background: white !important;
+    color: black !important;
+    min-height: auto !important;
+  }
+
+  .radix-themes,
+  .radix-themes * {
+    color: black !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  .app-main {
+    padding: 0 !important;
+  }
+}

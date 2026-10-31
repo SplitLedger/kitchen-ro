@@ -17,7 +17,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite"] }
 tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 
 
