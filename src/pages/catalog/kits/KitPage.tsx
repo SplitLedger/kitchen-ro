@@ -1,6 +1,6 @@
-import { Callout, Flex, Heading, Link as ThemeLink, Text } from "@radix-ui/themes";
+import { Callout, Flex, Heading, Link as ThemeLink } from "@radix-ui/themes";
 import { Link, getRouteApi, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { toast } from "sonner";
 import { CatalogBadges } from "@/components/CatalogBadges";
 import { CatalogRecordActions } from "@/components/CatalogRecordActions";
 import { KitForm } from "@/components/KitForm";
@@ -15,7 +15,6 @@ export function KitPage() {
   const { database } = useAppState();
   const router = useRouter();
   const navigate = useNavigate();
-  const [notice, setNotice] = useState<string | null>(null);
   const edited = kitDiffersFromSeed(kit);
 
   return (
@@ -34,14 +33,13 @@ export function KitPage() {
           <Callout.Text>This kit is archived, so it is hidden from recipe pages.</Callout.Text>
         </Callout.Root>
       ) : null}
-      {notice ? <Text color="green">{notice}</Text> : null}
       <KitForm
         key={`${kit.id}:${kit.name}:${kit.produceValue}:${kit.alwaysSuccess}:${kit.referencePrice ?? ""}:${kit.archived}`}
         currencyLabel={currencyLabel}
         db={database.db}
         kit={kit}
         onSaved={() => {
-          setNotice("Saved.");
+          toast.success("Saved.");
         }}
       />
       <CatalogRecordActions
@@ -49,7 +47,7 @@ export function KitPage() {
         onArchive={async (archived) => {
           await setKitArchived(database.db, kit.id, archived);
           await router.invalidate();
-          setNotice(archived ? "Archived." : "Restored to the kit list.");
+          toast.success(archived ? "Archived." : "Restored to the kit list.");
         }}
         reset={
           kit.origin === "official" && edited
@@ -59,7 +57,7 @@ export function KitPage() {
                 onAction: async () => {
                   await resetKit(database.db, kit.id);
                   await router.invalidate();
-                  setNotice("Restored from the official seed.");
+                  toast.success("Restored from the official seed.");
                 },
               }
             : undefined

@@ -1,7 +1,7 @@
-import { Button, Callout, Flex, Grid } from "@radix-ui/themes";
+import { Button, Flex, Grid } from "@radix-ui/themes";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { toast } from "sonner";
 import { FormField } from "@/components/FormField";
 import { IntegerInput } from "@/components/IntegerInput";
 import { TextFormControl } from "@/components/TextFormControl";
@@ -25,7 +25,6 @@ export function IngredientForm({
 }) {
   const router = useRouter();
   const navigate = useNavigate();
-  const [formError, setFormError] = useState<string | null>(null);
   const form = useForm({
     defaultValues: {
       name: ingredient?.name ?? "",
@@ -35,7 +34,6 @@ export function IngredientForm({
           : String(ingredient.referencePrice),
     },
     onSubmit: async ({ value }) => {
-      setFormError(null);
       try {
         const draft = {
           name: parseCatalogName(value.name),
@@ -54,7 +52,7 @@ export function IngredientForm({
           params: { ingredientId: String(id) },
         });
       } catch (caught) {
-        setFormError(caught instanceof Error ? caught.message : "Could not save the ingredient.");
+        toast.error(caught instanceof Error ? caught.message : "Could not save the ingredient.");
       }
     },
   });
@@ -119,11 +117,6 @@ export function IngredientForm({
             )}
           </form.Field>
         </Grid>
-        {formError ? (
-          <Callout.Root color="red" variant="surface">
-            <Callout.Text>{formError}</Callout.Text>
-          </Callout.Root>
-        ) : null}
         <Flex gap="3" align="center">
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (

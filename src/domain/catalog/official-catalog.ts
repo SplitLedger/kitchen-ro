@@ -4,7 +4,7 @@ import { type FoodStat } from "./food-stat";
 // A leading number on that page is the quantity. A bare item is quantity 1.
 // Hinale Leaflet is stored as Hinalle Leaflet, Aloevera as Aloe Vera,
 // and Jack 'o Pumpkin as Jack o' Pumpkin.
-// referencePrice is an NPC shop price printed on that page. Unlisted items stay null.
+// referencePrice is the NPC shop price after Discount level 10. Unlisted items stay null.
 
 export type OfficialIngredient = {
   seedKey: string;
@@ -51,27 +51,27 @@ type RecipeSource = {
 };
 
 const npcReferencePrices: Readonly<Record<string, number>> = {
-  Apple: 15,
-  Banana: 15,
-  "Bag of Grain": 200,
-  Bread: 150,
-  China: 1000,
-  "Cooking Oil": 500,
-  "Edible Mushroom": 40,
-  "Fresh Fish": 250,
-  "Jack o' Pumpkin": 374,
-  "Mastela Fruit": 8500,
-  Meat: 50,
-  Memento: 600,
-  Milk: 25,
-  Pot: 200,
-  "Red Chile": 66,
-  "Red Spice": 1000,
-  "Savory Sauce": 700,
-  Shrimp: 550,
-  "Spicy Sauce": 700,
-  "Sweet Sauce": 700,
-  "Yellow Spice": 1000,
+  Apple: 11,
+  Banana: 11,
+  "Bag of Grain": 152,
+  Bread: 114,
+  China: 760,
+  "Cooking Oil": 380,
+  "Edible Mushroom": 30,
+  "Fresh Fish": 190,
+  "Jack o' Pumpkin": 284,
+  "Mastela Fruit": 6460,
+  Meat: 38,
+  Memento: 456,
+  Milk: 19,
+  Pot: 152,
+  "Red Chile": 50,
+  "Red Spice": 760,
+  "Savory Sauce": 532,
+  Shrimp: 418,
+  "Spicy Sauce": 532,
+  "Sweet Sauce": 532,
+  "Yellow Spice": 760,
 };
 
 export const officialKits: readonly OfficialKit[] = [
@@ -80,14 +80,14 @@ export const officialKits: readonly OfficialKit[] = [
     name: "Outdoor Cooking Kit",
     produceValue: 11,
     alwaysSuccess: false,
-    referencePrice: 500,
+    referencePrice: 380,
   },
   {
     seedKey: "home",
     name: "Home Cooking Kit",
     produceValue: 12,
     alwaysSuccess: false,
-    referencePrice: 1000,
+    referencePrice: 760,
   },
   {
     seedKey: "professional",

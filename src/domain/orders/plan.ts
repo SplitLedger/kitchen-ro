@@ -75,6 +75,8 @@ export type PlanLineInput = {
   recipe: PlanRecipe;
   quantity: number;
   saleOverride: number | null;
+  kit: PlanKit;
+  kitOverride: boolean;
 };
 
 export type PlanInput = {
@@ -260,8 +262,14 @@ function planOrderUnsafe(input: PlanInput): OrderPlan {
 
   const lines: PlanLine[] = [];
   const ingredients = new Map<number, PlanMaterial>();
+  const kits = new Map<string, PlanMaterial>();
 
   for (const line of input.lines) {
+    if (line.kitOverride && !line.kit.inCatalog) {
+      blockers.push(
+        `Choose a cooking kit for ${line.recipe.name}. The kit on this dish is no longer in the catalog.`,
+      );
+    }
     const planned = planLine(input, line, blockers, marginOk);
     lines.push(planned);
     if (planned.attempts === null) {
@@ -270,6 +278,7 @@ function planOrderUnsafe(input: PlanInput): OrderPlan {
     for (const item of line.recipe.items) {
       addIngredient(ingredients, item, planned.attempts);
     }
+    addKit(kits, line.kit, planned.attempts);
   }
 
   const materials = [...ingredients.values()].sort(
@@ -277,21 +286,18 @@ function planOrderUnsafe(input: PlanInput): OrderPlan {
       left.name.localeCompare(right.name, "en") ||
       (left.ingredientId ?? 0) - (right.ingredientId ?? 0),
   );
-  const attemptsTotal = lines.reduce((sum, line) => sum + (line.attempts ?? 0), 0);
-  if (attemptsTotal > 0) {
-    const unitValue = input.kit.inCatalog ? input.kit.unitValue : null;
-    materials.push({
-      kind: "kit",
-      ingredientId: null,
-      kitId: input.kit.inCatalog ? input.kit.id : null,
-      name: input.kit.name,
-      quantity: attemptsTotal,
-      unitValue,
-      extendedCost: extend(attemptsTotal, unitValue),
-    });
-  }
+  materials.push(
+    ...[...kits.values()].sort(
+      (left, right) =>
+        left.name.localeCompare(right.name, "en") || (left.kitId ?? 0) - (right.kitId ?? 0),
+    ),
+  );
 
-  return summarize(lines, materials, isCertainSuccess(input.kit), blockers);
+  const certainSuccess =
+    input.lines.length === 0
+      ? isCertainSuccess(input.kit)
+      : input.lines.every((line) => isCertainSuccess(line.kit));
+  return summarize(lines, materials, certainSuccess, blockers);
 }
 
 function planLine(
@@ -301,7 +307,7 @@ function planLine(
   marginOk: boolean,
 ): PlanLine {
   const recipe = line.recipe;
-  const rates = cookingSuccessRates(input.cook, input.kit, recipe.level, recipe.items.length);
+  const rates = cookingSuccessRates(input.cook, line.kit, recipe.level, recipe.items.length);
   const usedRateBp = chosenRate(input.mode, rates);
   const usableRate = isRate(usedRateBp) ? usedRateBp : null;
   if (usableRate === null) {
@@ -320,7 +326,7 @@ function planLine(
   }
 
   const saleOverride = validSaleOverride(line.saleOverride, recipe.name, blockers);
-  const attempt = lineAttempt(recipe, input.kit);
+  const attempt = lineAttempt(recipe, line.kit);
   let oneAttemptCost: number | null = null;
   let missingNames: readonly string[] = [];
   let unitCost: number | null = null;
@@ -387,6 +393,30 @@ function lineAttempt(recipe: PlanRecipe, kit: PlanKit) {
 
 function chosenRate(mode: OrderPlanningMode, rates: { minBp: number; avgBp: number }): number {
   return mode === "conservative" ? rates.minBp : rates.avgBp;
+}
+
+function addKit(materials: Map<string, PlanMaterial>, kit: PlanKit, attempts: number): void {
+  const key = kit.inCatalog ? `kit:${kit.id}` : `missing:${kit.id}:${kit.name}`;
+  const unitValue = kit.inCatalog ? kit.unitValue : null;
+  const existing = materials.get(key);
+  if (!existing) {
+    materials.set(key, {
+      kind: "kit",
+      ingredientId: null,
+      kitId: kit.inCatalog ? kit.id : null,
+      name: kit.name,
+      quantity: attempts,
+      unitValue,
+      extendedCost: extend(attempts, unitValue),
+    });
+    return;
+  }
+  const quantity = existing.quantity + attempts;
+  if (!Number.isSafeInteger(quantity)) {
+    throw new OrderPlanError("Shopping quantity is too large.");
+  }
+  existing.quantity = quantity;
+  existing.extendedCost = extend(quantity, existing.unitValue);
 }
 
 function addIngredient(

@@ -1,7 +1,7 @@
-import { Button, Callout, Flex, Text } from "@radix-ui/themes";
+import { Button, Flex } from "@radix-ui/themes";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { toast } from "sonner";
 import { FormField } from "@/components/FormField";
 import { IntegerInput } from "@/components/IntegerInput";
 import { firstFieldError } from "@/components/firstFieldError";
@@ -20,23 +20,19 @@ export function SaleOverrideForm({
 }) {
   const { database } = useAppState();
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const form = useForm({
     defaultValues: {
       salePrice: salePriceOverride === null ? "" : String(salePriceOverride),
     },
     onSubmit: async ({ value }) => {
-      setFormError(null);
-      setNotice(null);
       try {
         const salePrice = parseOptionalInt(value.salePrice, "Sale price");
         await setRecipeSaleOverride(database.db, recipeId, salePrice);
         await router.invalidate();
         form.setFieldValue("salePrice", salePrice === null ? "" : String(salePrice));
-        setNotice("Saved.");
+        toast.success("Saved.");
       } catch (caught) {
-        setFormError(caught instanceof Error ? caught.message : "Could not save the sale price.");
+        toast.error(caught instanceof Error ? caught.message : "Could not save the sale price.");
       }
     },
   });
@@ -76,12 +72,6 @@ export function SaleOverrideForm({
             </FormField>
           )}
         </form.Field>
-        {notice ? <Text color="green">{notice}</Text> : null}
-        {formError ? (
-          <Callout.Root color="red" variant="surface">
-            <Callout.Text>{formError}</Callout.Text>
-          </Callout.Root>
-        ) : null}
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Flex>

@@ -10,6 +10,7 @@ import {
 } from "@radix-ui/themes";
 import { Link, getRouteApi, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { ConfirmAction } from "@/components/ConfirmAction";
 import {
   cancelOrder,
@@ -42,7 +43,6 @@ export function OrderPage() {
   const { database, settings } = useAppState();
   const router = useRouter();
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const { order, plan } = detail;
   const editable = order.status === "draft";
@@ -50,12 +50,11 @@ export function OrderPage() {
 
   async function confirm() {
     setSaving(true);
-    setError(null);
     try {
       await confirmOrder(database.db, order.id);
       await router.invalidate();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not confirm this order.");
+      toast.error(caught instanceof Error ? caught.message : "Could not confirm this order.");
     } finally {
       setSaving(false);
     }
@@ -63,25 +62,23 @@ export function OrderPage() {
 
   async function remove() {
     setSaving(true);
-    setError(null);
     try {
       await deleteDraftOrder(database.db, order.id);
       await router.invalidate();
       await navigate({ to: "/orders" });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not delete this order.");
+      toast.error(caught instanceof Error ? caught.message : "Could not delete this order.");
       setSaving(false);
     }
   }
 
   async function changeStatus(action: () => Promise<void>, fallback: string) {
     setSaving(true);
-    setError(null);
     try {
       await action();
       await router.invalidate();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : fallback);
+      toast.error(caught instanceof Error ? caught.message : fallback);
     } finally {
       setSaving(false);
     }
@@ -141,7 +138,7 @@ export function OrderPage() {
         >
           <Flex direction="column" gap="4">
             <Flex gap="5" wrap="wrap">
-              <Fact label="Kit" value={order.kitName} />
+              <Fact label="Default cooking kit" value={order.kitName} />
               <Fact label="Base level" value={String(order.baseLevel)} />
               <Fact label="DEX" value={String(order.dex)} />
               <Fact label="LUK" value={String(order.luk)} />
@@ -164,8 +161,10 @@ export function OrderPage() {
       >
         <OrderLines
           editable={editable}
+          kits={detail.pickerKits}
           lines={detail.lines}
           orderId={order.id}
+          orderKitName={order.kitName}
           recipes={detail.pickerRecipes}
         />
       </OrderCard>
@@ -198,11 +197,6 @@ export function OrderPage() {
           </Flex>
         </Callout.Root>
       ) : null}
-      {error ? (
-        <Callout.Root color="red" variant="surface">
-          <Callout.Text>{error}</Callout.Text>
-        </Callout.Root>
-      ) : null}
       {editable ? (
         <Flex className="no-print" gap="3" wrap="wrap">
           <ConfirmAction
@@ -221,6 +215,7 @@ export function OrderPage() {
             actionLabel="Delete draft"
             description="This draft and its lines are removed."
             disabled={saving}
+            loading={saving}
             title="Delete this draft?"
             triggerLabel="Delete draft"
             onConfirm={() => {
@@ -237,6 +232,7 @@ export function OrderPage() {
                 color="gray"
                 description="The frozen plan stays. Inventory was already taken when the order was confirmed."
                 disabled={saving}
+                loading={saving}
                 title="Mark this order done?"
                 triggerLabel="Mark done"
                 onConfirm={() => {
@@ -250,6 +246,7 @@ export function OrderPage() {
                 actionLabel="Cancel order"
                 description="The frozen plan stays. The quantities this order took go back into inventory."
                 disabled={saving}
+                loading={saving}
                 title="Cancel this order?"
                 triggerLabel="Cancel order"
                 onConfirm={() => {
@@ -266,6 +263,7 @@ export function OrderPage() {
             color="gray"
             description="The frozen rates, costs, and shopping list are discarded. Stock this order still holds goes back into inventory. The order is then recalculated from the current catalog and lots. Quantities and sale overrides stay."
             disabled={saving}
+            loading={saving}
             title="Reopen this order as a draft?"
             triggerLabel="Reopen as draft"
             onConfirm={() => {

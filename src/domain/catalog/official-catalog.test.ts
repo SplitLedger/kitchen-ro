@@ -55,12 +55,12 @@ test("kit produce values run from 11 through 15 and only Fantastic always succee
   expect(always.map((kit) => kit.seedKey)).toEqual(["fantastic"]);
   expect(officialKits.find((kit) => kit.seedKey === "outdoor")).toMatchObject({
     name: "Outdoor Cooking Kit",
-    referencePrice: 500,
+    referencePrice: 380,
     alwaysSuccess: false,
   });
   expect(officialKits.find((kit) => kit.seedKey === "home")).toMatchObject({
     name: "Home Cooking Kit",
-    referencePrice: 1000,
+    referencePrice: 760,
     alwaysSuccess: false,
   });
   for (const kit of officialKits) {
@@ -109,15 +109,15 @@ test("normalizes wiki typos and keeps the published ingredient lines", () => {
   expect(lines("Lucky Soup").at(-1)).toEqual(["Aloe", 1]);
 });
 
-test("stores NPC shop prices from the cooking page and leaves the rest empty", () => {
-  expect(price("Cooking Oil")).toBe(500);
-  expect(price("Meat")).toBe(50);
-  expect(price("Mastela Fruit")).toBe(8500);
-  expect(price("Apple")).toBe(15);
-  expect(price("Jack o' Pumpkin")).toBe(374);
-  expect(price("Memento")).toBe(600);
-  expect(price("Shrimp")).toBe(550);
-  expect(price("Red Chile")).toBe(66);
+test("stores NPC shop prices after Discount level 10 and leaves the rest empty", () => {
+  expect(price("Cooking Oil")).toBe(380);
+  expect(price("Meat")).toBe(38);
+  expect(price("Mastela Fruit")).toBe(6460);
+  expect(price("Apple")).toBe(11);
+  expect(price("Jack o' Pumpkin")).toBe(284);
+  expect(price("Memento")).toBe(456);
+  expect(price("Shrimp")).toBe(418);
+  expect(price("Red Chile")).toBe(50);
   expect(price("Grasshopper's Leg")).toBeNull();
   expect(price("Hinalle Leaflet")).toBeNull();
   expect(price("Aloe Vera")).toBeNull();

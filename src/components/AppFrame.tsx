@@ -2,6 +2,7 @@ import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { Box, Button, Flex, IconButton, Text } from "@radix-ui/themes";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useAppState } from "@/providers/AppStateProvider";
 
 const navItems = [
@@ -16,16 +17,14 @@ export function AppFrame() {
   const { settings, setTheme } = useAppState();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const nextTheme = settings.theme === "dark" ? "light" : "dark";
 
   async function toggleTheme() {
     setSaving(true);
-    setError(null);
     try {
       await setTheme(nextTheme);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not save the theme.");
+      toast.error(caught instanceof Error ? caught.message : "Could not save the theme.");
     } finally {
       setSaving(false);
     }
@@ -82,11 +81,6 @@ export function AppFrame() {
             />
           </Box>
         </Flex>
-        {error ? (
-          <Text as="p" color="red" mt="2">
-            {error}
-          </Text>
-        ) : null}
       </Box>
       <Box asChild className="app-main" flexGrow="1" p={{ initial: "4", md: "5", lg: "6" }}>
         <main>
@@ -111,6 +105,7 @@ function ThemeToggle({
       aria-label={nextTheme === "dark" ? "Use dark theme" : "Use light theme"}
       variant="soft"
       color="gray"
+      loading={saving}
       disabled={saving}
       onClick={onToggle}
     >

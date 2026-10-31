@@ -1,7 +1,7 @@
-import { Button, Callout, Flex, Grid, Link as ThemeLink, Select, Text } from "@radix-ui/themes";
+import { Button, Flex, Grid, Link as ThemeLink, Select, Text } from "@radix-ui/themes";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { toast } from "sonner";
 import { FormField } from "@/components/FormField";
 import { IntegerInput } from "@/components/IntegerInput";
 import { TextFormControl } from "@/components/TextFormControl";
@@ -85,11 +85,9 @@ export function RecipeForm({
 }) {
   const router = useRouter();
   const navigate = useNavigate();
-  const [formError, setFormError] = useState<string | null>(null);
   const form = useForm({
     defaultValues: recipe ? valuesFromRecipe(recipe) : emptyRecipe(),
     onSubmit: async ({ value }) => {
-      setFormError(null);
       try {
         const draft = {
           name: parseCatalogName(value.name),
@@ -119,7 +117,7 @@ export function RecipeForm({
         await router.invalidate();
         await navigate({ to: "/catalog/$recipeId", params: { recipeId: String(id) } });
       } catch (caught) {
-        setFormError(caught instanceof Error ? caught.message : "Could not save the dish.");
+        toast.error(caught instanceof Error ? caught.message : "Could not save the dish.");
       }
     },
   });
@@ -377,11 +375,6 @@ export function RecipeForm({
             </form.Field>
           </Flex>
         </Grid>
-        {formError ? (
-          <Callout.Root color="red" variant="surface">
-            <Callout.Text>{formError}</Callout.Text>
-          </Callout.Root>
-        ) : null}
         <Flex gap="3" align="center">
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (

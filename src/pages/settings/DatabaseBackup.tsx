@@ -1,5 +1,6 @@
 import { AlertDialog, Button, Flex, Heading, Text } from "@radix-ui/themes";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   installDatabaseBackup,
   pickTauriBackup,
@@ -12,22 +13,25 @@ import { isTauriRuntime } from "@/db/runtime";
 export function DatabaseBackup() {
   const tauri = isTauriRuntime();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(() => takeRestoreError());
   const [pending, setPending] = useState<Uint8Array | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    const message = takeRestoreError();
+    if (message) {
+      toast.error(message);
+    }
+  }, []);
+
   async function save() {
     setBusy(true);
-    setMessage(null);
-    setError(null);
     try {
       const result = await saveDatabaseBackup();
       if (result === "saved") {
-        setMessage(tauri ? "Saved the backup." : "Downloaded the backup.");
+        toast.success(tauri ? "Saved the backup." : "Downloaded the backup.");
       }
     } catch (caught) {
-      setError(backupMessage(caught, "Could not save the backup."));
+      toast.error(backupMessage(caught, "Could not save the backup."));
     } finally {
       setBusy(false);
     }
@@ -38,12 +42,10 @@ export function DatabaseBackup() {
       return;
     }
     setBusy(true);
-    setMessage(null);
-    setError(null);
     try {
       setPending(await readChosenBackup(file));
     } catch (caught) {
-      setError(backupMessage(caught, "Could not restore that backup."));
+      toast.error(backupMessage(caught, "Could not restore that backup."));
     } finally {
       setBusy(false);
       if (inputRef.current) {
@@ -54,15 +56,13 @@ export function DatabaseBackup() {
 
   async function chooseTauriFile() {
     setBusy(true);
-    setMessage(null);
-    setError(null);
     try {
       const bytes = await pickTauriBackup();
       if (bytes) {
         setPending(bytes);
       }
     } catch (caught) {
-      setError(backupMessage(caught, "Could not restore that backup."));
+      toast.error(backupMessage(caught, "Could not restore that backup."));
     } finally {
       setBusy(false);
     }
@@ -74,11 +74,10 @@ export function DatabaseBackup() {
     }
     const bytes = pending;
     setBusy(true);
-    setError(null);
     try {
       await installDatabaseBackup(bytes);
     } catch (caught) {
-      setError(backupMessage(caught, "Could not restore that backup."));
+      toast.error(backupMessage(caught, "Could not restore that backup."));
       setBusy(false);
     }
   }
@@ -108,6 +107,7 @@ export function DatabaseBackup() {
           <Button
             type="button"
             variant="soft"
+            loading={busy}
             disabled={busy}
             onClick={() => {
               void chooseTauriFile();
@@ -119,6 +119,7 @@ export function DatabaseBackup() {
           <Button
             type="button"
             variant="soft"
+            loading={busy}
             disabled={busy}
             onClick={() => {
               inputRef.current?.click();
@@ -140,12 +141,6 @@ export function DatabaseBackup() {
           }}
         />
       )}
-      {message ? <Text color="green">{message}</Text> : null}
-      {error ? (
-        <Text color="red" size="2">
-          {error}
-        </Text>
-      ) : null}
       <AlertDialog.Root
         open={pending !== null}
         onOpenChange={(open) => {

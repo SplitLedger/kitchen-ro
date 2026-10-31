@@ -173,6 +173,10 @@ export const orderLines = sqliteTable(
     unitSale: integer("unit_sale"),
     saleSource: text("sale_source", { enum: orderSaleSources }),
     saleOverride: integer("sale_override"),
+    kitId: integer("kit_id").references(() => cookingKits.id, { onDelete: "set null" }),
+    kitOverride: integer("kit_override", { mode: "boolean" }).notNull().default(false),
+    kitName: text("kit_name"),
+    alwaysSuccess: integer("always_success", { mode: "boolean" }),
   },
   (table) => [
     unique("order_lines_order_position").on(table.orderId, table.position),

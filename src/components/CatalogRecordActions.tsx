@@ -1,5 +1,6 @@
-import { Button, Flex, Text } from "@radix-ui/themes";
+import { Button, Flex } from "@radix-ui/themes";
 import { useState } from "react";
+import { toast } from "sonner";
 import { ConfirmAction } from "@/components/ConfirmAction";
 
 type NamedAction = {
@@ -20,15 +21,13 @@ export function CatalogRecordActions({
   deleteAction?: NamedAction;
 }) {
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function run(action: () => Promise<void>) {
     setPending(true);
-    setError(null);
     try {
       await action();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not update the catalog.");
+      toast.error(caught instanceof Error ? caught.message : "Could not update the catalog.");
     } finally {
       setPending(false);
     }
@@ -41,6 +40,7 @@ export function CatalogRecordActions({
           type="button"
           variant="soft"
           color="gray"
+          loading={pending}
           disabled={pending}
           onClick={() => {
             void run(() => onArchive(!archived));
@@ -56,6 +56,7 @@ export function CatalogRecordActions({
             actionLabel="Reset"
             color="gray"
             disabled={pending}
+            loading={pending}
             onConfirm={() => {
               void run(reset.onAction);
             }}
@@ -68,13 +69,13 @@ export function CatalogRecordActions({
             description={deleteAction.description}
             actionLabel="Delete"
             disabled={pending}
+            loading={pending}
             onConfirm={() => {
               void run(deleteAction.onAction);
             }}
           />
         ) : null}
       </Flex>
-      {error ? <Text color="red">{error}</Text> : null}
     </Flex>
   );
 }

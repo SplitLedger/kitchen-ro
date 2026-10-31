@@ -19,6 +19,7 @@ import {
   type OrderPlanningMode,
   type PlanKit,
   type PlanLine,
+  type PlanLineInput,
   type PlanMaterial,
   type PlanRecipe,
 } from "@/domain/orders/plan";
@@ -73,6 +74,9 @@ export type OrderLineView = {
   quantity: number;
   saleOverride: number | null;
   fallbackName: string;
+  kitOverride: boolean;
+  kitId: number | null;
+  kitName: string;
   plan: PlanLine | null;
 };
 
@@ -125,10 +129,7 @@ export function parseOrderNotes(value: string): string {
 }
 
 export async function listOrderSummaries(db: KitchenDatabase): Promise<OrderSummary[]> {
-  const rows = await db
-    .select()
-    .from(orders)
-    .orderBy(asc(orders.createdAt), asc(orders.id));
+  const rows = await db.select().from(orders).orderBy(asc(orders.createdAt), asc(orders.id));
   if (rows.length === 0) {
     return [];
   }
@@ -316,7 +317,42 @@ export async function addOrderRecipe(
       level: recipe.level,
       ingredientCount: recipe.items.length,
       quantity: 1,
+      kitId: null,
+      kitOverride: false,
     });
+  }
+  await touchOrder(db, orderId);
+}
+
+export async function setOrderLineKit(
+  db: KitchenDatabase,
+  orderId: number,
+  lineId: number,
+  kitId: number | null,
+): Promise<void> {
+  await requireDraft(db, orderId);
+  const [line] = await db
+    .select()
+    .from(orderLines)
+    .where(and(eq(orderLines.id, lineId), eq(orderLines.orderId, orderId)));
+  if (!line) {
+    throw new OrderError("That line is not on this order.");
+  }
+  if (kitId === null) {
+    await db
+      .update(orderLines)
+      .set({ kitId: null, kitOverride: false })
+      .where(eq(orderLines.id, lineId));
+  } else {
+    const kits = await listCookingKits(db, { includeArchived: true });
+    const kit = kits.find((item) => item.id === kitId);
+    if (!kit) {
+      throw new OrderError("Choose a cooking kit.");
+    }
+    await db
+      .update(orderLines)
+      .set({ kitId: kit.id, kitOverride: true })
+      .where(eq(orderLines.id, lineId));
   }
   await touchOrder(db, orderId);
 }
@@ -399,12 +435,11 @@ export async function confirmOrder(db: KitchenDatabase, orderId: number): Promis
   if (detail.plan.blockers.length > 0) {
     throw new OrderError(detail.plan.blockers.join(" "));
   }
-  const kit = detail.order.kitId
-    ? (await listCookingKits(db, { includeArchived: true })).find(
-        (item) => item.id === detail.order.kitId,
-      )
-    : null;
-  if (!kit) {
+  const catalogKits = await listCookingKits(db, { includeArchived: true });
+  const orderKit = detail.order.kitId
+    ? catalogKits.find((item) => item.id === detail.order.kitId)
+    : undefined;
+  if (!orderKit) {
     throw new OrderError(
       "Choose a cooking kit. The kit on this order is no longer in the catalog.",
     );
@@ -418,10 +453,10 @@ export async function confirmOrder(db: KitchenDatabase, orderId: number): Promis
         status: "confirmed",
         confirmedAt: now,
         updatedAt: now,
-        kitId: kit.id,
-        kitName: kit.name,
-        produceValue: kit.produceValue,
-        alwaysSuccess: kit.alwaysSuccess,
+        kitId: orderKit.id,
+        kitName: orderKit.name,
+        produceValue: orderKit.produceValue,
+        alwaysSuccess: orderKit.alwaysSuccess,
       })
       .where(eq(orders.id, orderId));
 
@@ -437,6 +472,14 @@ export async function confirmOrder(db: KitchenDatabase, orderId: number): Promis
         plan.oneAttemptCost === null
       ) {
         throw new OrderError("This order is missing a price or a success rate.");
+      }
+      const lineKit = line.kitOverride
+        ? catalogKits.find((item) => item.id === line.kitId)
+        : orderKit;
+      if (!lineKit) {
+        throw new OrderError(
+          `Choose a cooking kit for ${plan.name}. The kit on this dish is no longer in the catalog.`,
+        );
       }
       await tx
         .update(orderLines)
@@ -456,6 +499,8 @@ export async function confirmOrder(db: KitchenDatabase, orderId: number): Promis
           unitSale: plan.unitSale,
           saleSource: plan.saleSource,
           saleOverride: plan.saleOverride,
+          kitName: lineKit.name,
+          alwaysSuccess: lineKit.alwaysSuccess,
         })
         .where(and(eq(orderLines.id, line.lineId), eq(orderLines.orderId, orderId)));
     }
@@ -526,6 +571,8 @@ export async function reopenOrder(db: KitchenDatabase, orderId: number): Promise
         unitCost: null,
         unitSale: null,
         saleSource: null,
+        kitName: null,
+        alwaysSuccess: null,
       })
       .where(eq(orderLines.orderId, orderId));
     await tx.delete(orderMaterials).where(eq(orderMaterials.orderId, orderId));
@@ -569,8 +616,17 @@ function buildOrderDetail(order: Order, context: OrderContext): OrderDetail {
       ? buildDraft(order, lines, recipesById, context.kits, context.prices)
       : buildSnapshot(order, lines, materials);
 
+  const referencedKitIds = new Set<number>();
+  if (order.kitId !== null) {
+    referencedKitIds.add(order.kitId);
+  }
+  for (const line of lines) {
+    if (line.kitId !== null) {
+      referencedKitIds.add(line.kitId);
+    }
+  }
   const pickerKits = context.kits
-    .filter((kit) => !kit.archived || kit.id === order.kitId)
+    .filter((kit) => !kit.archived || referencedKitIds.has(kit.id))
     .map((kit) => ({ id: kit.id, name: kit.name, archived: kit.archived }));
 
   return {
@@ -597,11 +653,14 @@ function buildDraft(
   prices: PriceBook,
 ): { lines: OrderLineView[]; plan: OrderPlan } {
   const kitRow = order.kitId ? kits.find((kit) => kit.id === order.kitId) : undefined;
-  const kit = toPlanKit(order, kitRow, prices);
-  const inputs: { recipe: PlanRecipe; quantity: number; saleOverride: number | null }[] = [];
+  const orderKit = toPlanKit(order, kitRow, prices);
+  const inputs: PlanLineInput[] = [];
   const removed: string[] = [];
+  const resolvedKits = new Map<number, PlanKit>();
 
   for (const line of lines) {
+    const resolved = resolveLineKit(order, line, kits, prices, orderKit);
+    resolvedKits.set(line.id, resolved);
     const recipe = line.recipeId ? recipesById.get(line.recipeId) : undefined;
     if (!recipe) {
       removed.push(
@@ -613,6 +672,8 @@ function buildDraft(
       recipe: toPlanRecipe(recipe, prices, order.priceBasis),
       quantity: line.quantity,
       saleOverride: line.saleOverride,
+      kit: resolved,
+      kitOverride: line.kitOverride,
     });
   }
 
@@ -625,7 +686,7 @@ function buildDraft(
         luk: order.luk,
         mastery: order.mastery,
       },
-      kit,
+      kit: orderKit,
       marginPercent: order.marginPercent,
       lines: inputs,
     }),
@@ -643,6 +704,9 @@ function buildDraft(
       quantity: line.quantity,
       saleOverride: line.saleOverride,
       fallbackName: line.name,
+      kitOverride: line.kitOverride,
+      kitId: line.kitId,
+      kitName: resolvedKits.get(line.id)?.name ?? order.kitName,
       plan: line.recipeId ? (planByRecipe.get(line.recipeId) ?? null) : null,
     })),
   };
@@ -654,7 +718,11 @@ function buildSnapshot(
   materials: readonly OrderMaterial[],
 ): { lines: OrderLineView[]; plan: OrderPlan } {
   const planned = lines.map(lineFromSnapshot);
-  const plan = summarize(planned, materials.map(materialFromSnapshot), isCertainSuccess(order), []);
+  const certainSuccess =
+    lines.length === 0
+      ? isCertainSuccess(order)
+      : lines.every((line) => line.alwaysSuccess === true);
+  const plan = summarize(planned, materials.map(materialFromSnapshot), certainSuccess, []);
   return {
     plan,
     lines: lines.map((line, index) => ({
@@ -663,8 +731,42 @@ function buildSnapshot(
       quantity: line.quantity,
       saleOverride: line.saleOverride,
       fallbackName: line.name,
+      kitOverride: line.kitOverride,
+      kitId: line.kitId,
+      kitName: line.kitName ?? order.kitName,
       plan: planned[index] ?? null,
     })),
+  };
+}
+
+function resolveLineKit(
+  order: Order,
+  line: OrderLine,
+  kits: readonly CatalogKit[],
+  prices: PriceBook,
+  orderKit: PlanKit,
+): PlanKit {
+  if (!line.kitOverride) {
+    return orderKit;
+  }
+  const kit = line.kitId ? kits.find((item) => item.id === line.kitId) : undefined;
+  if (!kit) {
+    return {
+      id: line.kitId ?? 0,
+      name: "Cooking kit",
+      produceValue: 0,
+      alwaysSuccess: false,
+      unitValue: null,
+      inCatalog: false,
+    };
+  }
+  return {
+    id: kit.id,
+    name: kit.name,
+    produceValue: kit.produceValue,
+    alwaysSuccess: kit.alwaysSuccess,
+    unitValue: unitPriceForBasis(lookupSummary(prices, "kit", kit.id), order.priceBasis),
+    inCatalog: true,
   };
 }
 

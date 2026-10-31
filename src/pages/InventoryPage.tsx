@@ -1,6 +1,7 @@
 import { Box, Button, Checkbox, Flex, Heading, Table, Text, TextField } from "@radix-ui/themes";
 import { getRouteApi, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { formatUnitValue } from "@/components/formatReferencePrice";
 import type { CatalogIngredient, CatalogKit } from "@/db/catalog";
 import { createLot, deleteLot, updateLot } from "@/db/inventory";
@@ -25,7 +26,6 @@ export function InventoryPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const rows = inventoryRows(ingredients, kits, lots, query, showArchived);
   const selected = rows.find((row) => row.key === selectedKey) ?? null;
@@ -37,17 +37,12 @@ export function InventoryPage() {
   async function saveLot(lotId: number, values: LotDraft) {
     const lot = lots.find((row) => row.id === lotId);
     if (!lot) {
-      setFormError("That lot is not in inventory.");
-      return;
+      throw new Error("That lot is not in inventory.");
     }
     setSaving(true);
-    setFormError(null);
     try {
       await updateLot(database.db, lotId, { ...values, acquiredOn: lot.acquiredOn });
       await refresh();
-    } catch (caught) {
-      setFormError(caught instanceof Error ? caught.message : "Could not save the lot.");
-      throw caught;
     } finally {
       setSaving(false);
     }
@@ -55,12 +50,11 @@ export function InventoryPage() {
 
   async function removeLot(lotId: number) {
     setSaving(true);
-    setFormError(null);
     try {
       await deleteLot(database.db, lotId);
       await refresh();
     } catch (caught) {
-      setFormError(caught instanceof Error ? caught.message : "Could not delete the lot.");
+      toast.error(caught instanceof Error ? caught.message : "Could not delete the lot.");
     } finally {
       setSaving(false);
     }
@@ -85,13 +79,9 @@ export function InventoryPage() {
           saving={saving}
           onCreate={async (owner, values) => {
             setSaving(true);
-            setFormError(null);
             try {
               await createLot(database.db, { ...owner, ...values });
               await refresh();
-            } catch (caught) {
-              setFormError(caught instanceof Error ? caught.message : "Could not add the lot.");
-              throw caught;
             } finally {
               setSaving(false);
             }
@@ -121,11 +111,6 @@ export function InventoryPage() {
           </Text>
         </Flex>
       </Flex>
-      {formError ? (
-        <Text color="red" size="2">
-          {formError}
-        </Text>
-      ) : null}
       {rows.length === 0 ? (
         <Text color="gray">{emptyCopy(lots.length, query, showArchived)}</Text>
       ) : (
@@ -165,7 +150,6 @@ export function InventoryPage() {
                         variant="soft"
                         color="gray"
                         onClick={() => {
-                          setFormError(null);
                           setSelectedKey(row.key);
                         }}
                       >

@@ -1,6 +1,6 @@
-import { Callout, Flex, Heading, Link as ThemeLink, Text } from "@radix-ui/themes";
+import { Callout, Flex, Heading, Link as ThemeLink } from "@radix-ui/themes";
 import { Link, getRouteApi, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { toast } from "sonner";
 import { CatalogBadges } from "@/components/CatalogBadges";
 import { CatalogRecordActions } from "@/components/CatalogRecordActions";
 import { IngredientForm } from "@/components/IngredientForm";
@@ -15,7 +15,6 @@ export function IngredientPage() {
   const { database } = useAppState();
   const router = useRouter();
   const navigate = useNavigate();
-  const [notice, setNotice] = useState<string | null>(null);
   const edited = ingredientDiffersFromSeed(ingredient);
 
   return (
@@ -40,14 +39,13 @@ export function IngredientPage() {
           </Callout.Text>
         </Callout.Root>
       ) : null}
-      {notice ? <Text color="green">{notice}</Text> : null}
       <IngredientForm
         key={`${ingredient.id}:${ingredient.name}:${ingredient.referencePrice ?? ""}:${ingredient.archived}`}
         currencyLabel={currencyLabel}
         db={database.db}
         ingredient={ingredient}
         onSaved={() => {
-          setNotice("Saved.");
+          toast.success("Saved.");
         }}
       />
       <CatalogRecordActions
@@ -55,7 +53,7 @@ export function IngredientPage() {
         onArchive={async (archived) => {
           await setIngredientArchived(database.db, ingredient.id, archived);
           await router.invalidate();
-          setNotice(archived ? "Archived." : "Restored to the ingredient list.");
+          toast.success(archived ? "Archived." : "Restored to the ingredient list.");
         }}
         reset={
           ingredient.origin === "official" && edited
@@ -65,7 +63,7 @@ export function IngredientPage() {
                 onAction: async () => {
                   await resetIngredient(database.db, ingredient.id);
                   await router.invalidate();
-                  setNotice("Restored from the official seed.");
+                  toast.success("Restored from the official seed.");
                 },
               }
             : undefined

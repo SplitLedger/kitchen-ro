@@ -1,7 +1,7 @@
-import { Box, Button, Callout, Checkbox, Flex, Grid, Text } from "@radix-ui/themes";
+import { Box, Button, Checkbox, Flex, Grid, Text } from "@radix-ui/themes";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { toast } from "sonner";
 import { FormField } from "@/components/FormField";
 import { IntegerInput } from "@/components/IntegerInput";
 import { TextFormControl } from "@/components/TextFormControl";
@@ -30,7 +30,6 @@ export function KitForm({
 }) {
   const router = useRouter();
   const navigate = useNavigate();
-  const [formError, setFormError] = useState<string | null>(null);
   const form = useForm({
     defaultValues: {
       name: kit?.name ?? "",
@@ -42,7 +41,6 @@ export function KitForm({
           : String(kit.referencePrice),
     },
     onSubmit: async ({ value }) => {
-      setFormError(null);
       try {
         const draft = {
           name: parseCatalogName(value.name),
@@ -60,7 +58,7 @@ export function KitForm({
         await router.invalidate();
         await navigate({ to: "/catalog/kits/$kitId", params: { kitId: String(id) } });
       } catch (caught) {
-        setFormError(caught instanceof Error ? caught.message : "Could not save the kit.");
+        toast.error(caught instanceof Error ? caught.message : "Could not save the kit.");
       }
     },
   });
@@ -167,11 +165,6 @@ export function KitForm({
             </FormField>
           )}
         </form.Field>
-        {formError ? (
-          <Callout.Root color="red" variant="surface">
-            <Callout.Text>{formError}</Callout.Text>
-          </Callout.Root>
-        ) : null}
         <Flex align="center" gap="3" style={{ gridColumn: "1 / -1" }}>
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (

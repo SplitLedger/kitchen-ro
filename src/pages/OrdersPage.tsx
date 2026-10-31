@@ -10,6 +10,7 @@ import {
 } from "@radix-ui/themes";
 import { Link, getRouteApi, useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { formatMoney } from "@/components/formatReferencePrice";
 import { createDraftOrder, type OrderSummary } from "@/db/orders";
 import { planningModeLabels } from "@/domain/orders/plan";
@@ -29,17 +30,15 @@ export function OrdersPage() {
   const router = useRouter();
   const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function create() {
     setCreating(true);
-    setError(null);
     try {
       const orderId = await createDraftOrder(database.db, settings);
       await router.invalidate();
       await navigate({ to: "/orders/$orderId", params: { orderId: String(orderId) } });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not start an order.");
+      toast.error(caught instanceof Error ? caught.message : "Could not start an order.");
       setCreating(false);
     }
   }
@@ -56,19 +55,14 @@ export function OrdersPage() {
           </Text>
         </Flex>
         <Button
-          disabled={creating}
+          loading={creating}
           onClick={() => {
             void create();
           }}
         >
-          {creating ? "Starting…" : "New order"}
+          New order
         </Button>
       </Flex>
-      {error ? (
-        <Text color="red" size="2">
-          {error}
-        </Text>
-      ) : null}
       {orders.length === 0 ? (
         <Text color="gray">No orders yet.</Text>
       ) : (

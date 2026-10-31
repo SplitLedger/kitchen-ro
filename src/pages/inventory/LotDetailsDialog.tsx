@@ -143,6 +143,7 @@ function LotDetailsBody({
                       type="button"
                       variant="soft"
                       color="gray"
+                      loading={saving}
                       disabled={saving}
                       onClick={() => setEditingId(lot.id)}
                     >
@@ -156,6 +157,7 @@ function LotDetailsBody({
                           : "This removes the quantity still on this lot. A confirmed order that took from it can put that quantity back."
                       }
                       disabled={saving}
+                      loading={saving}
                       title={`Delete this ${item.name} lot?`}
                       triggerLabel="Delete"
                       onConfirm={() => {

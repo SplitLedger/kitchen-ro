@@ -25,6 +25,7 @@ export function toOrderDocument(
       name: line.plan?.name ?? line.fallbackName,
       quantity: line.plan?.quantity ?? line.quantity,
       unitSale: line.plan?.unitSale ?? null,
+      kitName: line.kitName,
     })),
     materials: plan.materials.map((material) => ({
       name: material.name,

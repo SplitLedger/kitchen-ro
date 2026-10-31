@@ -1,7 +1,7 @@
-import { Button, Callout, Flex, Text, TextArea } from "@radix-ui/themes";
+import { Button, Flex, TextArea } from "@radix-ui/themes";
 import { useForm } from "@tanstack/react-form";
 import { useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { toast } from "sonner";
 import { FormField } from "@/components/FormField";
 import { IntegerInput } from "@/components/IntegerInput";
 import { TextFormControl } from "@/components/TextFormControl";
@@ -52,8 +52,6 @@ const statFields = [
 export function OrderHeaderForm({ order }: { order: Order }) {
   const { database } = useAppState();
   const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const form = useForm({
     defaultValues: {
       customerName: order.customerName,
@@ -65,8 +63,6 @@ export function OrderHeaderForm({ order }: { order: Order }) {
       marginPercent: String(order.marginPercent),
     },
     onSubmit: async ({ value }) => {
-      setFormError(null);
-      setNotice(null);
       try {
         const customerName = parseCustomerName(value.customerName);
         const draft: OrderHeaderDraft = {
@@ -87,9 +83,9 @@ export function OrderHeaderForm({ order }: { order: Order }) {
         form.setFieldValue("mastery", String(draft.mastery));
         form.setFieldValue("marginPercent", String(draft.marginPercent));
         await router.invalidate();
-        setNotice("Saved.");
+        toast.success("Saved.");
       } catch (caught) {
-        setFormError(caught instanceof Error ? caught.message : "Could not save this order.");
+        toast.error(caught instanceof Error ? caught.message : "Could not save this order.");
       }
     },
   });
@@ -214,12 +210,6 @@ export function OrderHeaderForm({ order }: { order: Order }) {
             )}
           </form.Field>
         </Flex>
-        {notice ? <Text color="green">{notice}</Text> : null}
-        {formError ? (
-          <Callout.Root color="red" variant="surface">
-            <Callout.Text>{formError}</Callout.Text>
-          </Callout.Root>
-        ) : null}
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Flex>

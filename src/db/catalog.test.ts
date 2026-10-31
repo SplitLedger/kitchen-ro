@@ -62,7 +62,7 @@ test("seeds official rows once and leaves later edits in place", async () => {
   ).toEqual([
     { quantity: 5, name: "Grasshopper's Leg", referencePrice: null },
     { quantity: 1, name: "Old Frying Pan", referencePrice: null },
-    { quantity: 1, name: "Cooking Oil", referencePrice: 500 },
+    { quantity: 1, name: "Cooking Oil", referencePrice: 380 },
   ]);
 
   const tongue = firstRecipes.find((recipe) => recipe.name === "Steamed Tongue");
@@ -73,8 +73,8 @@ test("seeds official rows once and leaves later edits in place", async () => {
   expect(
     kits.map((kit) => [kit.name, kit.produceValue, kit.alwaysSuccess, kit.referencePrice]),
   ).toEqual([
-    ["Outdoor Cooking Kit", 11, false, 500],
-    ["Home Cooking Kit", 12, false, 1000],
+    ["Outdoor Cooking Kit", 11, false, 380],
+    ["Home Cooking Kit", 12, false, 760],
     ["Professional Cooking Kit", 13, false, null],
     ["Royal Cooking Kit", 14, false, null],
     ["Fantastic Cooking Kit", 15, true, null],

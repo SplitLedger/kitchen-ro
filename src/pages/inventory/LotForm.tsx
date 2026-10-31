@@ -1,5 +1,6 @@
 import { Button, Flex, RadioGroup, Text, TextField } from "@radix-ui/themes";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { toast } from "sonner";
 import { FormField } from "@/components/FormField";
 import { IntegerInput } from "@/components/IntegerInput";
 import {
@@ -81,7 +82,7 @@ export function LotForm({
         note: parseLotNote(values.note),
       });
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not save the lot.");
+      toast.error(caught instanceof Error ? caught.message : "Could not save the lot.");
     }
   }
 

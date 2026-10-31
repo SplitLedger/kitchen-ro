@@ -11,6 +11,7 @@ import {
 } from "@radix-ui/themes";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { FoodStatBadge } from "@/components/FoodStatBadge";
 import { FormField } from "@/components/FormField";
 import { IntegerInput } from "@/components/IntegerInput";
@@ -18,9 +19,11 @@ import { formatMoney, formatUnitValue } from "@/components/formatReferencePrice"
 import {
   addOrderRecipe,
   removeOrderLine,
+  setOrderLineKit,
   setOrderLineQuantity,
   setOrderLineSale,
   type OrderLineView,
+  type PickerKit,
   type PickerRecipe,
 } from "@/db/orders";
 import { Fact } from "@/pages/catalog/$recipeId/Fact";
@@ -41,11 +44,15 @@ export function OrderLines({
   orderId,
   lines,
   recipes,
+  kits,
+  orderKitName,
   editable,
 }: {
   orderId: number;
   lines: readonly OrderLineView[];
   recipes: readonly PickerRecipe[];
+  kits: readonly PickerKit[];
+  orderKitName: string;
   editable: boolean;
 }) {
   const { settings } = useAppState();
@@ -63,8 +70,10 @@ export function OrderLines({
               key={line.lineId}
               currencyLabel={currencyLabel}
               editable={editable}
+              kits={kits}
               line={line}
               orderId={orderId}
+              orderKitName={orderKitName}
             />
           ))}
         </Grid>
@@ -84,7 +93,6 @@ function RecipePicker({
 }) {
   const { database } = useAppState();
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [pickKey, setPickKey] = useState(0);
   const groups = groupByLevel(recipes);
@@ -92,12 +100,11 @@ function RecipePicker({
 
   async function add(recipeId: number) {
     setAdding(true);
-    setError(null);
     try {
       await addOrderRecipe(database.db, orderId, recipeId);
       await router.invalidate();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not add that dish.");
+      toast.error(caught instanceof Error ? caught.message : "Could not add that dish.");
     } finally {
       setAdding(false);
       setPickKey((key) => key + 1);
@@ -147,11 +154,6 @@ function RecipePicker({
           </Select.Content>
         </Select.Root>
       </FormField>
-      {error ? (
-        <Text color="red" size="2">
-          {error}
-        </Text>
-      ) : null}
     </Flex>
   );
 }
@@ -164,11 +166,15 @@ function dishOptionLabel(recipe: PickerRecipe, alreadyOnOrder: boolean): string 
 function FoodCard({
   orderId,
   line,
+  kits,
+  orderKitName,
   editable,
   currencyLabel,
 }: {
   orderId: number;
   line: OrderLineView;
+  kits: readonly PickerKit[];
+  orderKitName: string;
   editable: boolean;
   currencyLabel: string;
 }) {
@@ -217,6 +223,11 @@ function FoodCard({
           ) : null}
         </Flex>
         <Flex gap="4" wrap="wrap">
+          {editable ? (
+            <LineKitSelect kits={kits} line={line} orderId={orderId} orderKitName={orderKitName} />
+          ) : (
+            <Fact label="Cooking kit" value={line.kitName} />
+          )}
           <Flex direction="column" gap="1">
             <Text color="gray" size="1">
               Quantity
@@ -294,6 +305,73 @@ function MissingIngredients({ names }: { names: readonly string[] }) {
   );
 }
 
+function LineKitSelect({
+  orderId,
+  line,
+  kits,
+  orderKitName,
+}: {
+  orderId: number;
+  line: OrderLineView;
+  kits: readonly PickerKit[];
+  orderKitName: string;
+}) {
+  const { database } = useAppState();
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const name = line.plan?.name ?? line.fallbackName;
+  const selected =
+    line.kitId !== null && !kits.some((kit) => kit.id === line.kitId)
+      ? [...kits, { id: line.kitId, name: line.kitName || "Missing kit", archived: true }]
+      : kits;
+  const value = !line.kitOverride
+    ? "default"
+    : line.kitId === null
+      ? undefined
+      : String(line.kitId);
+
+  async function save(kitId: number | null) {
+    const unchanged = kitId === null ? !line.kitOverride : line.kitOverride && line.kitId === kitId;
+    if (unchanged) {
+      return;
+    }
+    setSaving(true);
+    try {
+      await setOrderLineKit(database.db, orderId, line.lineId, kitId);
+      await router.invalidate();
+    } catch (caught) {
+      toast.error(caught instanceof Error ? caught.message : "Could not update the order.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Flex direction="column" gap="1" minWidth="14rem">
+      <Text color="gray" size="1">
+        Cooking kit
+      </Text>
+      <Select.Root
+        value={value}
+        disabled={saving}
+        onValueChange={(next) => {
+          void save(next === "default" ? null : Number(next));
+        }}
+      >
+        <Select.Trigger aria-label={`Cooking kit for ${name}`} placeholder="Choose a kit" />
+        <Select.Content>
+          <Select.Item value="default">{`Default · ${orderKitName}`}</Select.Item>
+          {selected.map((kit) => (
+            <Select.Item key={kit.id} value={String(kit.id)}>
+              {kit.archived ? `${kit.name} (archived)` : kit.name}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+    </Flex>
+  );
+}
+
 function QuantityField({ orderId, line }: { orderId: number; line: OrderLineView }) {
   const { database } = useAppState();
   const router = useRouter();
@@ -316,7 +394,7 @@ function QuantityField({ orderId, line }: { orderId: number; line: OrderLineView
       await setOrderLineQuantity(database.db, orderId, line.lineId, quantity);
       await router.invalidate();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not save the quantity.");
+      toast.error(caught instanceof Error ? caught.message : "Could not save the quantity.");
     }
   }
 
@@ -422,7 +500,7 @@ function SaleField({
       await setOrderLineSale(database.db, orderId, line.lineId, saleOverride);
       await router.invalidate();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not save the sale price.");
+      toast.error(caught instanceof Error ? caught.message : "Could not save the sale price.");
     }
   }
 
@@ -454,34 +532,30 @@ function SaleField({
 function RemoveLine({ orderId, lineId }: { orderId: number; lineId: number }) {
   const { database } = useAppState();
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   return (
-    <Flex direction="column" gap="1">
-      <Button
-        type="button"
-        variant="soft"
-        color="red"
-        onClick={() => {
-          void (async () => {
-            setError(null);
-            try {
-              await removeOrderLine(database.db, orderId, lineId);
-              await router.invalidate();
-            } catch (caught) {
-              setError(caught instanceof Error ? caught.message : "Could not remove that line.");
-            }
-          })();
-        }}
-      >
-        Remove
-      </Button>
-      {error ? (
-        <Text color="red" size="1">
-          {error}
-        </Text>
-      ) : null}
-    </Flex>
+    <Button
+      type="button"
+      variant="soft"
+      color="red"
+      loading={removing}
+      onClick={() => {
+        void (async () => {
+          setRemoving(true);
+          try {
+            await removeOrderLine(database.db, orderId, lineId);
+            await router.invalidate();
+          } catch (caught) {
+            toast.error(caught instanceof Error ? caught.message : "Could not remove that line.");
+          } finally {
+            setRemoving(false);
+          }
+        })();
+      }}
+    >
+      Remove
+    </Button>
   );
 }
 

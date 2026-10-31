@@ -1,5 +1,6 @@
-import { Button, Flex, Text } from "@radix-ui/themes";
+import { Button, Flex } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { OrderLineView } from "@/db/orders";
 import type { Order } from "@/db/schema";
 import type { OrderPlan } from "@/domain/orders/plan";
@@ -18,8 +19,6 @@ export function OrderDocuments({
   plan: OrderPlan;
 }) {
   const { settings } = useAppState();
-  const [notice, setNotice] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [fallback, setFallback] = useState<string | null>(null);
   const orderDocument = toOrderDocument(order, lines, plan, settings.currencyLabel);
 
@@ -33,16 +32,14 @@ export function OrderDocuments({
   }, [fallback]);
 
   async function copy(kind: "list" | "receipt") {
-    setError(null);
     const text = kind === "list" ? formatShoppingList(orderDocument) : formatReceipt(orderDocument);
     try {
       await copyPlainText(text);
       setFallback(null);
-      setNotice(kind === "list" ? "Copied the shopping list." : "Copied the receipt.");
+      toast.success(kind === "list" ? "Copied the shopping list." : "Copied the receipt.");
     } catch (caught) {
-      setNotice(null);
       setFallback(text);
-      setError(
+      toast.error(
         caught instanceof Error
           ? `${caught.message} The text is selected below.`
           : "Could not copy that text. It is selected below.",
@@ -81,16 +78,6 @@ export function OrderDocuments({
           Print
         </Button>
       </Flex>
-      {notice ? (
-        <Text color="green" size="2">
-          {notice}
-        </Text>
-      ) : null}
-      {error ? (
-        <Text color="red" size="2">
-          {error}
-        </Text>
-      ) : null}
       {fallback ? (
         <textarea
           readOnly

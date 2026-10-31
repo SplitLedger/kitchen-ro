@@ -1,6 +1,13 @@
 import { expect, test } from "vitest";
 import { cookingSuccessRates } from "@/domain/cooking/success";
-import { planOrder, shoppingAttempts, type PlanInput, type PlanKit, type PlanRecipe } from "./plan";
+import {
+  planOrder,
+  shoppingAttempts,
+  type PlanInput,
+  type PlanKit,
+  type PlanLineInput,
+  type PlanRecipe,
+} from "./plan";
 
 const cook = { baseLevel: 99, dex: 99, luk: 1, mastery: 0 };
 
@@ -36,16 +43,23 @@ const stew = recipe(1, "Stew", [
 ]);
 const soup = recipe(2, "Soup", [carrot, { id: 12, name: "Herb", quantity: 1, unitValue: 7 }]);
 
+function line(
+  recipe: PlanRecipe,
+  quantity: number,
+  saleOverride: number | null,
+  kit: PlanKit = outdoor,
+  kitOverride = false,
+): PlanLineInput {
+  return { recipe, quantity, saleOverride, kit, kitOverride };
+}
+
 function input(mode: PlanInput["mode"], soupOverride: number | null = null): PlanInput {
   return {
     mode,
     cook,
     kit: outdoor,
     marginPercent: 20,
-    lines: [
-      { recipe: stew, quantity: 1, saleOverride: 500 },
-      { recipe: { ...soup, salePriceOverride: soupOverride }, quantity: 1, saleOverride: null },
-    ],
+    lines: [line(stew, 1, 500), line({ ...soup, salePriceOverride: soupOverride }, 1, null)],
   };
 }
 
@@ -132,10 +146,7 @@ test("a certain-success kit orders one attempt per food in either mode", () => {
     unitValue: 50,
     inCatalog: true,
   };
-  const lines = [
-    { recipe: stew, quantity: 3, saleOverride: null },
-    { recipe: soup, quantity: 2, saleOverride: null },
-  ];
+  const lines = [line(stew, 3, null, fantastic), line(soup, 2, null, fantastic)];
   const expected = planOrder({ mode: "expected", cook, kit: fantastic, marginPercent: 20, lines });
   const conservative = planOrder({
     mode: "conservative",
@@ -166,12 +177,12 @@ test("a missing unit value keeps the attempt count and blocks confirm", () => {
   const unpriced = planOrder({
     ...input("expected"),
     lines: [
-      { recipe: stew, quantity: 1, saleOverride: null },
-      {
-        recipe: recipe(2, "Soup", [carrot, { id: 12, name: "Herb", quantity: 1, unitValue: null }]),
-        quantity: 1,
-        saleOverride: null,
-      },
+      line(stew, 1, null),
+      line(
+        recipe(2, "Soup", [carrot, { id: 12, name: "Herb", quantity: 1, unitValue: null }]),
+        1,
+        null,
+      ),
     ],
   });
 
@@ -182,4 +193,67 @@ test("a missing unit value keeps the attempt count and blocks confirm", () => {
   expect(unpriced.gatherCost).toBeNull();
   expect(unpriced.statisticalFoodCost).toBeNull();
   expect(unpriced.blockers).toEqual(["Add inventory for Herb."]);
+});
+
+test("two kits keep separate attempts, prices, and rates", () => {
+  const fantastic: PlanKit = {
+    id: 5,
+    name: "Fantastic Cooking Kit",
+    produceValue: 15,
+    alwaysSuccess: true,
+    unitValue: 50,
+    inCatalog: true,
+  };
+  const plan = planOrder({
+    mode: "expected",
+    cook,
+    kit: outdoor,
+    marginPercent: 20,
+    lines: [line(stew, 1, null), line(soup, 1, null, fantastic, true)],
+  });
+
+  expect(plan.certainSuccess).toBe(false);
+  expect(plan.lines.map((row) => [row.name, row.usedRateBp, row.attempts])).toEqual([
+    ["Stew", 3200, 4],
+    ["Soup", 10_000, 1],
+  ]);
+  expect(
+    plan.materials
+      .filter((material) => material.kind === "kit")
+      .map((material) => [material.name, material.kitId, material.quantity, material.extendedCost]),
+  ).toEqual([
+    ["Fantastic Cooking Kit", 5, 1, 50],
+    ["Outdoor Cooking Kit", 1, 4, 400],
+  ]);
+  expect(plan.materials.find((material) => material.name === "Carrot")?.quantity).toBe(9);
+
+  const empty = planOrder({
+    mode: "expected",
+    cook,
+    kit: fantastic,
+    marginPercent: 20,
+    lines: [],
+  });
+  expect(empty.certainSuccess).toBe(true);
+
+  const gone: PlanKit = {
+    id: 9,
+    name: "Retired Kit",
+    produceValue: 11,
+    alwaysSuccess: false,
+    unitValue: null,
+    inCatalog: false,
+  };
+  const blocked = planOrder({
+    mode: "expected",
+    cook,
+    kit: { ...outdoor, inCatalog: false, unitValue: null },
+    marginPercent: 20,
+    lines: [line(stew, 1, null, gone, true)],
+  });
+  expect(blocked.blockers).toEqual([
+    "Choose a cooking kit. The kit on this order is no longer in the catalog.",
+    "Choose a cooking kit for Stew. The kit on this dish is no longer in the catalog.",
+    "Add inventory for Retired Kit.",
+  ]);
 });

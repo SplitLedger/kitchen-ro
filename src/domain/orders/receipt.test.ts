@@ -77,3 +77,28 @@ test("receipt lists the charge and the rounding gap", () => {
     ].join("\n"),
   );
 });
+
+test("receipt names a kit only on a line that does not use the default", () => {
+  const text = formatReceipt(
+    sampleOrder({
+      lines: [
+        {
+          name: "Fried Grasshopper Legs",
+          quantity: 2,
+          unitSale: 120,
+          kitName: "Outdoor Cooking Kit",
+        },
+        {
+          name: "Steamed Tongue",
+          quantity: 1,
+          unitSale: null,
+          kitName: "Fantastic Cooking Kit",
+        },
+      ],
+    }),
+  );
+  expect(text).toContain("2× Fried Grasshopper Legs — 120 zeny each, 240 zeny");
+  expect(text).not.toContain("Fried Grasshopper Legs ·");
+  expect(text).toContain("1× Steamed Tongue · Fantastic Cooking Kit — price not set");
+  expect(text).toContain("Confirmed · Conservative · Average price · Outdoor Cooking Kit");
+});

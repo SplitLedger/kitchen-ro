@@ -119,7 +119,7 @@ test("resets an official ingredient without touching the archive flag", async ()
   expect(oil).toMatchObject({
     seedKey: "cooking-oil",
     name: "Cooking Oil",
-    referencePrice: 500,
+    referencePrice: 380,
     archived: true,
     origin: "official",
   });
@@ -389,7 +389,7 @@ test("edits a kit and resets the official fields", async () => {
     name: "Outdoor Cooking Kit",
     produceValue: 11,
     alwaysSuccess: false,
-    referencePrice: 500,
+    referencePrice: 380,
     archived: true,
     origin: "official",
   });

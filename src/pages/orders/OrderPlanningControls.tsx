@@ -1,6 +1,7 @@
 import { Badge, Callout, Flex, RadioGroup, Select, Text } from "@radix-ui/themes";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   updateOrderKit,
   updateOrderPlanningMode,
@@ -24,7 +25,6 @@ export function OrderPlanningControls({
   const { database } = useAppState();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const options =
     order.kitId && !kits.some((kit) => kit.id === order.kitId)
       ? [...kits, { id: order.kitId, name: order.kitName || "Missing kit", archived: true }]
@@ -32,12 +32,11 @@ export function OrderPlanningControls({
 
   async function save(change: () => Promise<void>) {
     setSaving(true);
-    setError(null);
     try {
       await change();
       await router.invalidate();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not update the order.");
+      toast.error(caught instanceof Error ? caught.message : "Could not update the order.");
     } finally {
       setSaving(false);
     }
@@ -115,7 +114,7 @@ export function OrderPlanningControls({
         </Flex>
         <Flex direction="column" gap="2" minWidth="16rem">
           <Text size="2" weight="medium">
-            Cooking kit
+            Default cooking kit
           </Text>
           {options.length > 0 ? (
             <Select.Root
@@ -129,7 +128,7 @@ export function OrderPlanningControls({
                 void save(() => updateOrderKit(database.db, order.id, kitId));
               }}
             >
-              <Select.Trigger aria-label="Cooking kit" placeholder="Choose a kit" />
+              <Select.Trigger aria-label="Default cooking kit" placeholder="Choose a kit" />
               <Select.Content>
                 {options.map((kit) => (
                   <Select.Item key={kit.id} value={String(kit.id)}>
@@ -157,11 +156,6 @@ export function OrderPlanningControls({
         <Badge color="gray" variant="soft">
           The kit on this order is archived.
         </Badge>
-      ) : null}
-      {error ? (
-        <Callout.Root color="red" variant="surface">
-          <Callout.Text>{error}</Callout.Text>
-        </Callout.Root>
       ) : null}
     </Flex>
   );

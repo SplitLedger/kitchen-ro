@@ -2,6 +2,7 @@ export type OrderDocumentLine = {
   name: string;
   quantity: number;
   unitSale: number | null;
+  kitName?: string | null;
 };
 
 export type OrderDocumentMaterial = {
@@ -69,7 +70,8 @@ export function formatReceipt(order: OrderDocument): string {
     lines.push("No dishes on this order.");
   } else {
     for (const line of order.lines) {
-      lines.push(`${line.quantity}× ${line.name} — ${saleText(line, order.currencyLabel)}`);
+      const kit = line.kitName && line.kitName !== order.kitName ? ` · ${line.kitName}` : "";
+      lines.push(`${line.quantity}× ${line.name}${kit} — ${saleText(line, order.currencyLabel)}`);
     }
   }
   lines.push(
