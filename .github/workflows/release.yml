@@ -1,9 +1,7 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
 
 jobs:
   release:
@@ -15,15 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Check tag matches tauri.conf.json version
+      - name: Print release version
         shell: pwsh
         run: |
           $version = (Get-Content -Raw -Path src-tauri/tauri.conf.json | ConvertFrom-Json).version
-          $expected = "v$version"
-          if ($env:GITHUB_REF_NAME -cne $expected) {
-            Write-Host "::error::Tag '$($env:GITHUB_REF_NAME)' does not match tauri.conf.json version $expected."
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Host "::error::version in src-tauri/tauri.conf.json is empty."
             exit 1
           }
+          Write-Host "Publishing v$version"
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
