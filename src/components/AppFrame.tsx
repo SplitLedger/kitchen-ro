@@ -5,10 +5,10 @@ import { useState } from "react";
 import { useAppState } from "@/providers/AppStateProvider";
 
 const navItems = [
-  { to: "/catalog", label: "Catalog" },
-  { to: "/ingredients", label: "Ingredients" },
   { to: "/inventory", label: "Inventory" },
   { to: "/orders", label: "Orders" },
+  { to: "/catalog", label: "Catalog" },
+  { to: "/ingredients", label: "Ingredients" },
   { to: "/settings", label: "Settings" },
 ] as const;
 
